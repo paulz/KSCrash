@@ -12,6 +12,7 @@
 #include "KSObjCApple.h"
 #include "objc-internal.h"
 
+uintptr_t objc_debug_taggedpointer_obfuscator = 0;
 
 void initializeTagPointers() {
     if (objc_debug_taggedpointer_obfuscator) {
