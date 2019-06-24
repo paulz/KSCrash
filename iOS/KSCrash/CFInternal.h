@@ -11,9 +11,9 @@
         NOT TO BE USED OUTSIDE CF!
 */
 
-#if !CF_BUILDING_CF
-    #error The header file CFInternal.h is for the exclusive use of CoreFoundation. No other project should include it.
-#endif
+//#if !CF_BUILDING_CF
+//    #error The header file CFInternal.h is for the exclusive use of CoreFoundation. No other project should include it.
+//#endif
 
 #if !defined(__COREFOUNDATION_CFINTERNAL__)
 #define __COREFOUNDATION_CFINTERNAL__ 1
@@ -89,8 +89,8 @@ CF_EXTERN_C_BEGIN
 #include <CoreFoundation/CFString.h>
 #include <CoreFoundation/CFDate.h>
 #include <CoreFoundation/CFArray.h>
-#include <CoreFoundation/CFLogUtilities.h>
-#include <CoreFoundation/CFRuntime.h>
+//#include <CoreFoundation/CFLogUtilities.h>
+//#include <CoreFoundation/CFRuntime.h>
 #include <limits.h>
 #include <stdatomic.h>
 #include <Block.h>
@@ -151,11 +151,13 @@ typedef struct os_log_s *os_log_t;
 #define __CF_BIG_ENDIAN__ 0
 #endif
 
-#include <CoreFoundation/ForFoundationOnly.h>
+//#include <CoreFoundation/ForFoundationOnly.h>
 #if DEPLOYMENT_RUNTIME_SWIFT
 #include <CoreFoundation/ForSwiftFoundationOnly.h>
 #include <CoreFoundation/CFString.h>
 #endif
+
+#define CF_PRIVATE
 
 CF_EXPORT const char *_CFProcessName(void);
 CF_PRIVATE CFStringRef _CFProcessNameString(void);
@@ -208,7 +210,7 @@ CF_PRIVATE CFIndex __CFActiveProcessorCount(void);
 #define __kCFLogAssertion	3
 
 // This CF-only log function uses no CF functionality, so it may be called anywhere within CF - including thread teardown or prior to full CF setup
-CF_PRIVATE void _CFLogSimple(int32_t lev, char *format, ...);
+//CF_PRIVATE void _CFLogSimple(int32_t lev, char *format, ...);
 
 #if defined(DEBUG)
 extern void __CFGenericValidateType_(CFTypeRef cf, CFTypeID type, const char *func);
@@ -328,13 +330,13 @@ enum {
 
 };
 
-CF_INLINE CFAllocatorRef __CFGetDefaultAllocator(void) {
-    CFAllocatorRef allocator = (CFAllocatorRef)_CFGetTSD(__CFTSDKeyAllocator);
-    if (NULL == allocator) {
-	allocator = kCFAllocatorSystemDefault;
-    }
-    return allocator;
-}
+//CF_INLINE CFAllocatorRef __CFGetDefaultAllocator(void) {
+//    CFAllocatorRef allocator = (CFAllocatorRef)_CFGetTSD(__CFTSDKeyAllocator);
+//    if (NULL == allocator) {
+//    allocator = kCFAllocatorSystemDefault;
+//    }
+//    return allocator;
+//}
 
 
 #if !defined(LLONG_MAX)
@@ -508,7 +510,7 @@ CF_PRIVATE Boolean __CFProphylacticAutofsAccess;
 CF_EXPORT id __NSDictionary0__;
 CF_EXPORT id __NSArray0__;
 
-#include <CoreFoundation/CFLocking.h>
+//#include <CoreFoundation/CFLocking.h>
 
 #if __has_include(<os/lock.h>)
 #include <os/lock.h>
@@ -605,9 +607,9 @@ static int _CFRecursiveMutexUnlock(_CFRecursiveMutex *mutex) {
 
 #if !__HAS_DISPATCH__
 
-typedef volatile long dispatch_once_t;
+//typedef volatile long dispatch_once_t;
 CF_PRIVATE void _CF_dispatch_once(dispatch_once_t *, void (^)(void));
-#define dispatch_once _CF_dispatch_once
+//#define dispatch_once _CF_dispatch_once
 
 #endif
 
@@ -866,9 +868,9 @@ struct __objcFastEnumerationStateEquivalent {
     unsigned long extra[5];
 };
 
-CF_PRIVATE CFSetRef __CFBinaryPlistCopyTopLevelKeys(CFAllocatorRef allocator, const uint8_t *databytes, uint64_t datalen, uint64_t startOffset, const CFBinaryPlistTrailer *trailer);
-CF_PRIVATE bool __CFBinaryPlistIsDictionary(const uint8_t *databytes, uint64_t datalen, uint64_t startOffset, const CFBinaryPlistTrailer *trailer);
-CF_PRIVATE bool __CFBinaryPlistIsArray(const uint8_t *databytes, uint64_t datalen, uint64_t startOffset, const CFBinaryPlistTrailer *trailer);
+//CF_PRIVATE CFSetRef __CFBinaryPlistCopyTopLevelKeys(CFAllocatorRef allocator, const uint8_t *databytes, uint64_t datalen, uint64_t startOffset, const CFBinaryPlistTrailer *trailer);
+//CF_PRIVATE bool __CFBinaryPlistIsDictionary(const uint8_t *databytes, uint64_t datalen, uint64_t startOffset, const CFBinaryPlistTrailer *trailer);
+//CF_PRIVATE bool __CFBinaryPlistIsArray(const uint8_t *databytes, uint64_t datalen, uint64_t startOffset, const CFBinaryPlistTrailer *trailer);
 
 #if 0
 #pragma mark -

@@ -144,6 +144,9 @@
 		4BA4671022C11C7D00C38B5F /* TaggedPointerSupport.c in Sources */ = {isa = PBXBuildFile; fileRef = 4BA4670C22C11C7D00C38B5F /* TaggedPointerSupport.c */; };
 		4BA4671122C11C7D00C38B5F /* TaggedPointerSupport.c in Sources */ = {isa = PBXBuildFile; fileRef = 4BA4670C22C11C7D00C38B5F /* TaggedPointerSupport.c */; };
 		4BA4671222C11C7D00C38B5F /* TaggedPointerSupport.c in Sources */ = {isa = PBXBuildFile; fileRef = 4BA4670C22C11C7D00C38B5F /* TaggedPointerSupport.c */; };
+		4BA4671422C11F5F00C38B5F /* CFRuntime.h in Headers */ = {isa = PBXBuildFile; fileRef = 4BA4671322C11F5F00C38B5F /* CFRuntime.h */; };
+		4BA4671522C11F5F00C38B5F /* CFRuntime.h in Headers */ = {isa = PBXBuildFile; fileRef = 4BA4671322C11F5F00C38B5F /* CFRuntime.h */; };
+		4BA4671622C11F5F00C38B5F /* CFRuntime.h in Headers */ = {isa = PBXBuildFile; fileRef = 4BA4671322C11F5F00C38B5F /* CFRuntime.h */; };
 		632D8DAD1EDFFA6700A9A62E /* KSCrashC.h in Copy Headers */ = {isa = PBXBuildFile; fileRef = CBF53D1F17EB765C0056DA83 /* KSCrashC.h */; };
 		632D8DAE1EDFFA6700A9A62E /* KSCrashCachedData.h in Copy Headers */ = {isa = PBXBuildFile; fileRef = CBA8A0C41E2561210019B5B9 /* KSCrashCachedData.h */; };
 		632D8DAF1EDFFA6700A9A62E /* KSCrashDoctor.h in Copy Headers */ = {isa = PBXBuildFile; fileRef = CBF53D2317EB765C0056DA83 /* KSCrashDoctor.h */; };
@@ -813,6 +816,8 @@
 		4B96630222C1193E00FBC268 /* objc-internal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = "objc-internal.h"; path = "../../Source/KSCrash/Recording/Tools/third-party/objc-internal.h"; sourceTree = "<group>"; };
 		4BA4670B22C11C7D00C38B5F /* TaggedPointerSupport.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TaggedPointerSupport.h; path = ../../Source/KSCrash/Recording/TaggedPointerSupport.h; sourceTree = "<group>"; };
 		4BA4670C22C11C7D00C38B5F /* TaggedPointerSupport.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = TaggedPointerSupport.c; path = ../../Source/KSCrash/Recording/TaggedPointerSupport.c; sourceTree = "<group>"; };
+		4BA4671322C11F5F00C38B5F /* CFRuntime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CFRuntime.h; path = "../../Source/KSCrash/Recording/Tools/third-party/CFRuntime.h"; sourceTree = "<group>"; };
+		4BA4671722C1237E00C38B5F /* CFInternal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CFInternal.h; sourceTree = "<group>"; };
 		CB02647E17F7CEC5003E0AED /* KSCPU_arm64.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = KSCPU_arm64.c; path = ../../Source/KSCrash/Recording/Tools/KSCPU_arm64.c; sourceTree = "<group>"; };
 		CB02648317FA5B12003E0AED /* Container+DeepSearch_Tests.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = "Container+DeepSearch_Tests.m"; path = "../../Source/KSCrash-Tests/Container+DeepSearch_Tests.m"; sourceTree = "<group>"; };
 		CB02648417FA5B12003E0AED /* FileBasedTestCase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = FileBasedTestCase.h; path = "../../Source/KSCrash-Tests/FileBasedTestCase.h"; sourceTree = "<group>"; };
@@ -1424,7 +1429,9 @@
 				CBF53D7517EB765C0056DA83 /* KSObjC.c */,
 				CBF53D7617EB765C0056DA83 /* KSObjC.h */,
 				CBF53D7717EB765C0056DA83 /* KSObjCApple.h */,
+				4BA4671722C1237E00C38B5F /* CFInternal.h */,
 				4B96630222C1193E00FBC268 /* objc-internal.h */,
+				4BA4671322C11F5F00C38B5F /* CFRuntime.h */,
 				CBF53D7C17EB765C0056DA83 /* KSSignalInfo.c */,
 				CBF53D7D17EB765C0056DA83 /* KSSignalInfo.h */,
 				CB41F0671E0C4E9800A1C9D7 /* KSStackCursor_Backtrace.c */,
@@ -1565,6 +1572,7 @@
 				CBA8A0C91E2561210019B5B9 /* KSCrashCachedData.h in Headers */,
 				03DE7CCC1C84DFCD00F789BA /* KSCrashInstallationQuincyHockey.h in Headers */,
 				03DE7CD01C84DFCD00F789BA /* KSCrashInstallationVictory.h in Headers */,
+				4BA4671522C11F5F00C38B5F /* CFRuntime.h in Headers */,
 				03DE7CC81C84DFCD00F789BA /* KSCrashInstallation.h in Headers */,
 				03DE7CCA1C84DFCD00F789BA /* KSCrashInstallationEmail.h in Headers */,
 				CB9821C41DFB359B00164220 /* KSMach.h in Headers */,
@@ -1654,6 +1662,7 @@
 				CB94D35D1CAC11B000806679 /* KSCrashInstallationConsole.h in Headers */,
 				CB25A5DA1DF22F4000EC2B02 /* KSThread.h in Headers */,
 				CBF53E8117EB7EA80056DA83 /* KSCrashReportSinkEMail.h in Headers */,
+				4BA4671422C11F5F00C38B5F /* CFRuntime.h in Headers */,
 				CBF53E8217EB7EA80056DA83 /* KSCrashReportSinkQuincyHockey.h in Headers */,
 				CBA997711C9214AD00D12149 /* KSCrashReportVersion.h in Headers */,
 				CB42F4551C6D180F002FD017 /* DemangleNodes.h in Headers */,
@@ -1776,6 +1785,7 @@
 				CBA8A0CA1E2561210019B5B9 /* KSCrashCachedData.h in Headers */,
 				EDF2BEDE1CCF15AD004BADF4 /* KSCrashInstallationEmail.h in Headers */,
 				EDF2BEE01CCF15AD004BADF4 /* KSCrashReportVersion.h in Headers */,
+				4BA4671622C11F5F00C38B5F /* CFRuntime.h in Headers */,
 				EDF2BEE21CCF15AD004BADF4 /* KSCrashReport.h in Headers */,
 				EDF2BEE31CCF15AD004BADF4 /* llvm-config.h in Headers */,
 				CB9821C51DFB359B00164220 /* KSMach.h in Headers */,

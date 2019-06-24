@@ -29,7 +29,7 @@
 #import <objc/runtime.h>
 
 #import "KSObjC.h"
-
+#include "TaggedPointerSupport.h"
 
 @interface SomeObjCClass: NSObject
 {
@@ -82,6 +82,10 @@ static NSArray* g_test_strings;
                        @"abcdefghijklmno",
                        @"abcdefghijklmnop",
                        ];
+}
+
+-(void)setUp {
+    initializeTagPointers();
 }
 
 - (NSArray*) componentsOfBasicDescription:(NSString*) description

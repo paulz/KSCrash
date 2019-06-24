@@ -105,8 +105,8 @@ NAME { \
 // KS: The original values wouldn't have worked. The slot shift and mask
 // were incorrect.
 #define TAG_COUNT 8
-//#define TAG_SLOT_MASK 0xf
-#define TAG_SLOT_MASK 0x07
+#define TAG_SLOT_MASK 0xf
+//#define TAG_SLOT_MASK 0x07
 
 #if SUPPORT_MSB_TAGGED_POINTERS
 #   define TAG_MASK (1ULL<<63)
@@ -254,47 +254,165 @@ typedef struct class_t {
 } class_t;
 
 
-// ======================================================================
-#pragma mark - CF-1153.18/CFRuntime.h -
-// ======================================================================
-
-typedef struct __CFRuntimeBase {
-    uintptr_t _cfisa;
-    uint8_t _cfinfo[4];
-#if __LP64__
-    uint32_t _rc;
-#endif
-} CFRuntimeBase;
-
-
-// ======================================================================
-#pragma mark - CF-1153.18/CFInternal.h -
-// ======================================================================
-
-#if defined(__BIG_ENDIAN__)
-#define __CF_BIG_ENDIAN__ 1
-#define __CF_LITTLE_ENDIAN__ 0
-#endif
-
-#if defined(__LITTLE_ENDIAN__)
-#define __CF_LITTLE_ENDIAN__ 1
-#define __CF_BIG_ENDIAN__ 0
-#endif
-
-#define CF_INFO_BITS (!!(__CF_BIG_ENDIAN__) * 3)
-#define CF_RC_BITS (!!(__CF_LITTLE_ENDIAN__) * 3)
-
-/* Bit manipulation macros */
-/* Bits are numbered from 31 on left to 0 on right */
-/* May or may not work if you use them on bitfields in types other than UInt32, bitfields the full width of a UInt32, or anything else for which they were not designed. */
-/* In the following, N1 and N2 specify an inclusive range N2..N1 with N1 >= N2 */
-#define __CFBitfieldMask(N1, N2)	((((UInt32)~0UL) << (31UL - (N1) + (N2))) >> (31UL - N1))
-#define __CFBitfieldGetValue(V, N1, N2)	(((V) & __CFBitfieldMask(N1, N2)) >> (N2))
+#include "CFRuntime.h"
+#include "CFInternal.h"
+//// ======================================================================
+//#pragma mark - CF-1153.18/CFInternal.h -
+//// ======================================================================
+//
+//#if defined(__BIG_ENDIAN__)
+//#define __CF_BIG_ENDIAN__ 1
+//#define __CF_LITTLE_ENDIAN__ 0
+//#endif
+//
+//#if defined(__LITTLE_ENDIAN__)
+//#define __CF_LITTLE_ENDIAN__ 1
+//#define __CF_BIG_ENDIAN__ 0
+//#endif
+//
+//#define CF_INFO_BITS (!!(__CF_BIG_ENDIAN__) * 3)
+//#define CF_RC_BITS (!!(__CF_LITTLE_ENDIAN__) * 3)
+//
+///* Bit manipulation macros */
+///* Bits are numbered from 31 on left to 0 on right */
+///* May or may not work if you use them on bitfields in types other than UInt32, bitfields the full width of a UInt32, or anything else for which they were not designed. */
+///* In the following, N1 and N2 specify an inclusive range N2..N1 with N1 >= N2 */
+//#define __CFBitfieldMask(N1, N2)    ((((UInt32)~0UL) << (31UL - (N1) + (N2))) >> (31UL - N1))
+//#define __CFBitfieldGetValue(V, N1, N2)    (((V) & __CFBitfieldMask(N1, N2)) >> (N2))
 
 
 // ======================================================================
 #pragma mark - CF-1153.18/CFString.c -
 // ======================================================================
+
+//// This is separate for C++
+//struct __notInlineMutable {
+//    void *buffer;
+//    CFIndex length;
+//    CFIndex capacity;                           // Capacity in bytes
+//    unsigned int hasGap:1;                      // Currently unused
+//    unsigned int isFixedCapacity:1;
+//    unsigned int isExternalMutable:1;
+//    unsigned int capacityProvidedExternally:1;
+//#if __LP64__
+//    unsigned long desiredCapacity:60;
+//#else
+//    unsigned long desiredCapacity:28;
+//#endif
+//    CFAllocatorRef contentsAllocator;           // Optional
+//};                             // The only mutable variant for CFString
+//
+///* !!! Never do sizeof(CFString); the union is here just to make it easier to access some fields.
+// */
+//struct __CFString {
+//    CFRuntimeBase base;
+//    union {    // In many cases the allocated structs are smaller than these
+//        struct __inline1 {
+//            CFIndex length;
+//        } inline1;                                      // Bytes follow the length
+//        struct __notInlineImmutable1 {
+//            void *buffer;                               // Note that the buffer is in the same place for all non-inline variants of CFString
+//            CFIndex length;
+//            CFAllocatorRef contentsDeallocator;        // Optional; just the dealloc func is used
+//        } notInlineImmutable1;                          // This is the usual not-inline immutable CFString
+//        struct __notInlineImmutable2 {
+//            void *buffer;
+//            CFAllocatorRef contentsDeallocator;        // Optional; just the dealloc func is used
+//        } notInlineImmutable2;                          // This is the not-inline immutable CFString when length is stored with the contents (first byte)
+//        struct __notInlineMutable notInlineMutable;
+//    } variants;
+//};
+//
+///*
+// I = is immutable
+// E = not inline contents
+// U = is Unicode
+// N = has NULL byte
+// L = has length byte
+// D = explicit deallocator for contents (for mutable objects, allocator)
+// C = length field is CFIndex (rather than UInt32); only meaningful for 64-bit, really
+// if needed this bit (valuable real-estate) can be given up for another bit elsewhere, since this info is needed just for 64-bit
+//
+// Also need (only for mutable)
+// F = is fixed
+// G = has gap
+// Cap, DesCap = capacity
+//
+// B7 B6 B5 B4 B3 B2 B1 B0
+// U  N  L  C  I
+//
+// B6 B5
+// 0  0   inline contents
+// 0  1   E (freed with default allocator)
+// 1  0   E (not freed)
+// 1  1   E D
+//
+// !!! Note: Constant CFStrings use the bit patterns:
+// C8 (11001000 = default allocator, not inline, not freed contents; 8-bit; has NULL byte; doesn't have length; is immutable)
+// D0 (11010000 = default allocator, not inline, not freed contents; Unicode; is immutable)
+// The bit usages should not be modified in a way that would effect these bit patterns.
+// */
+//
+//enum {
+//    __kCFFreeContentsWhenDoneMask = 0x020,
+//    __kCFFreeContentsWhenDone = 0x020,
+//    __kCFContentsMask = 0x060,
+//    __kCFHasInlineContents = 0x000,
+//    __kCFNotInlineContentsNoFree = 0x040,        // Don't free
+//    __kCFNotInlineContentsDefaultFree = 0x020,    // Use allocator's free function
+//    __kCFNotInlineContentsCustomFree = 0x060,        // Use a specially provided free function
+//    __kCFHasContentsAllocatorMask = 0x060,
+//    __kCFHasContentsAllocator = 0x060,        // (For mutable strings) use a specially provided allocator
+//    __kCFHasContentsDeallocatorMask = 0x060,
+//    __kCFHasContentsDeallocator = 0x060,
+//    __kCFIsMutableMask = 0x01,
+//    __kCFIsMutable = 0x01,
+//    __kCFIsUnicodeMask = 0x10,
+//    __kCFIsUnicode = 0x10,
+//    __kCFHasNullByteMask = 0x08,
+//    __kCFHasNullByte = 0x08,
+//    __kCFHasLengthByteMask = 0x04,
+//    __kCFHasLengthByte = 0x04,
+//    // !!! Bit 0x02 has been freed up
+//};
+//
+//
+//// !!! Assumptions:
+//// Mutable strings are not inline
+//// Compile-time constant strings are not inline
+//// Mutable strings always have explicit length (but they might also have length byte and null byte)
+//// If there is an explicit length, always use that instead of the length byte (length byte is useful for quickly returning pascal strings)
+//// Never look at the length byte for the length; use __CFStrLength or __CFStrLength2
+//
+///* The following set of functions and macros need to be updated on change to the bit configuration
+// */
+//CF_INLINE Boolean __CFStrIsMutable(CFStringRef str)                 {return (str->base._cfinfoa[CF_INFO_BITS] & __kCFIsMutableMask) == __kCFIsMutable;}
+//CF_INLINE Boolean __CFStrIsInline(CFStringRef str)                  {return (str->base._cfinfo[CF_INFO_BITS] & __kCFContentsMask) == __kCFHasInlineContents;}
+//CF_INLINE Boolean __CFStrFreeContentsWhenDone(CFStringRef str)      {return (str->base._cfinfo[CF_INFO_BITS] & __kCFFreeContentsWhenDoneMask) == __kCFFreeContentsWhenDone;}
+//CF_INLINE Boolean __CFStrHasContentsDeallocator(CFStringRef str)    {return (str->base._cfinfo[CF_INFO_BITS] & __kCFHasContentsDeallocatorMask) == __kCFHasContentsDeallocator;}
+//CF_INLINE Boolean __CFStrIsUnicode(CFStringRef str)                 {return (str->base._cfinfo[CF_INFO_BITS] & __kCFIsUnicodeMask) == __kCFIsUnicode;}
+//CF_INLINE Boolean __CFStrIsEightBit(CFStringRef str)                {return (str->base._cfinfo[CF_INFO_BITS] & __kCFIsUnicodeMask) != __kCFIsUnicode;}
+//CF_INLINE Boolean __CFStrHasNullByte(CFStringRef str)               {return (str->base._cfinfo[CF_INFO_BITS] & __kCFHasNullByteMask) == __kCFHasNullByte;}
+//CF_INLINE Boolean __CFStrHasLengthByte(CFStringRef str)             {return (str->base._cfinfo[CF_INFO_BITS] & __kCFHasLengthByteMask) == __kCFHasLengthByte;}
+//CF_INLINE Boolean __CFStrHasExplicitLength(CFStringRef str)         {return (str->base._cfinfo[CF_INFO_BITS] & (__kCFIsMutableMask | __kCFHasLengthByteMask)) != __kCFHasLengthByte;}    // Has explicit length if (1) mutable or (2) not mutable and no length byte
+//CF_INLINE Boolean __CFStrIsConstant(CFStringRef str) {
+//#if __LP64__
+//    return str->base._rc == 0;
+//#else
+//    return (str->base._cfinfo[CF_RC_BITS]) == 0;
+//#endif
+//}
+//
+///* Returns ptr to the buffer (which might include the length byte).
+// */
+//CF_INLINE const void *__CFStrContents(CFStringRef str) {
+//    if (__CFStrIsInline(str)) {
+//        return (const void *)(((uintptr_t)&(str->variants)) + (__CFStrHasExplicitLength(str) ? sizeof(CFIndex) : 0));
+//    } else {    // Not inline; pointer is always word 2
+//        return str->variants.notInlineImmutable1.buffer;
+//    }
+//}
+
 
 // This is separate for C++
 struct __notInlineMutable {
@@ -307,28 +425,31 @@ struct __notInlineMutable {
     unsigned int capacityProvidedExternally:1;
 #if __LP64__
     unsigned long desiredCapacity:60;
+#elif __LLP64__
+    unsigned long long desiredCapacity:60;
 #else
     unsigned long desiredCapacity:28;
 #endif
     CFAllocatorRef contentsAllocator;           // Optional
 };                             // The only mutable variant for CFString
 
+
 /* !!! Never do sizeof(CFString); the union is here just to make it easier to access some fields.
  */
 struct __CFString {
     CFRuntimeBase base;
-    union {	// In many cases the allocated structs are smaller than these
+    union {    // In many cases the allocated structs are smaller than these
         struct __inline1 {
             CFIndex length;
         } inline1;                                      // Bytes follow the length
         struct __notInlineImmutable1 {
             void *buffer;                               // Note that the buffer is in the same place for all non-inline variants of CFString
             CFIndex length;
-            CFAllocatorRef contentsDeallocator;		// Optional; just the dealloc func is used
+            CFAllocatorRef contentsDeallocator;        // Optional; just the dealloc func is used
         } notInlineImmutable1;                          // This is the usual not-inline immutable CFString
         struct __notInlineImmutable2 {
             void *buffer;
-            CFAllocatorRef contentsDeallocator;		// Optional; just the dealloc func is used
+            CFAllocatorRef contentsDeallocator;        // Optional; just the dealloc func is used
         } notInlineImmutable2;                          // This is the not-inline immutable CFString when length is stored with the contents (first byte)
         struct __notInlineMutable notInlineMutable;
     } variants;
@@ -362,31 +483,34 @@ struct __CFString {
  C8 (11001000 = default allocator, not inline, not freed contents; 8-bit; has NULL byte; doesn't have length; is immutable)
  D0 (11010000 = default allocator, not inline, not freed contents; Unicode; is immutable)
  The bit usages should not be modified in a way that would effect these bit patterns.
+ 
+ Note that some of the bit patterns in the enum below overlap and are duplicated. Keep this in mind as you do searches for use cases.
  */
-
 enum {
-    __kCFFreeContentsWhenDoneMask = 0x020,
-    __kCFFreeContentsWhenDone = 0x020,
-    __kCFContentsMask = 0x060,
-    __kCFHasInlineContents = 0x000,
-    __kCFNotInlineContentsNoFree = 0x040,		// Don't free
-    __kCFNotInlineContentsDefaultFree = 0x020,	// Use allocator's free function
-    __kCFNotInlineContentsCustomFree = 0x060,		// Use a specially provided free function
-    __kCFHasContentsAllocatorMask = 0x060,
-    __kCFHasContentsAllocator = 0x060,		// (For mutable strings) use a specially provided allocator
-    __kCFHasContentsDeallocatorMask = 0x060,
-    __kCFHasContentsDeallocator = 0x060,
-    __kCFIsMutableMask = 0x01,
-    __kCFIsMutable = 0x01,
-    __kCFIsUnicodeMask = 0x10,
-    __kCFIsUnicode = 0x10,
-    __kCFHasNullByteMask = 0x08,
-    __kCFHasNullByte = 0x08,
-    __kCFHasLengthByteMask = 0x04,
-    __kCFHasLengthByte = 0x04,
-    // !!! Bit 0x02 has been freed up
+    // These are bit numbers - do not use them as masks
+    __kCFIsMutable = 0,
+    // !!! Bit 1 has been freed up
+    __kCFHasLengthByte = 2,
+    __kCFHasNullByte = 3,
+    __kCFIsUnicode = 4,
 };
 
+typedef enum {
+    // These are values in bit numbers 5 & 6
+    __kCFHasInlineContents = 0,
+    __kCFNotInlineContentsDefaultFree = 1,  // Use allocator's free function
+    __kCFNotInlineContentsNoFree = 2,       // Don't free
+    __kCFNotInlineContentsCustomFree = 3,   // Use a specially provided free function
+} _CFStringInlineContents;
+
+CF_INLINE void __CFStrSetInlineContents(CFStringRef str, _CFStringInlineContents contents) {__CFRuntimeSetValue(str, 6, 5, contents);}
+CF_INLINE Boolean __CFStrIsInline(CFStringRef str)                  {return __CFRuntimeGetValue(str, 6, 5) == __kCFHasInlineContents;}
+CF_INLINE Boolean __CFStrFreeContentsWhenDone(CFStringRef str)      {
+    // Contents of this flag are shared with the inline contents field
+    return __CFRuntimeGetFlag(str, 5);
+}
+CF_INLINE Boolean __CFStrHasContentsDeallocator(CFStringRef str)    {return __CFRuntimeGetValue(str, 6, 5) == __kCFNotInlineContentsCustomFree;}
+CF_INLINE Boolean __CFStrHasContentsAllocator(CFStringRef str)      {return __CFRuntimeGetValue(str, 6, 5) == __kCFNotInlineContentsCustomFree;}
 
 // !!! Assumptions:
 // Mutable strings are not inline
@@ -397,29 +521,48 @@ enum {
 
 /* The following set of functions and macros need to be updated on change to the bit configuration
  */
-CF_INLINE Boolean __CFStrIsMutable(CFStringRef str)                 {return (str->base._cfinfo[CF_INFO_BITS] & __kCFIsMutableMask) == __kCFIsMutable;}
-CF_INLINE Boolean __CFStrIsInline(CFStringRef str)                  {return (str->base._cfinfo[CF_INFO_BITS] & __kCFContentsMask) == __kCFHasInlineContents;}
-CF_INLINE Boolean __CFStrFreeContentsWhenDone(CFStringRef str)      {return (str->base._cfinfo[CF_INFO_BITS] & __kCFFreeContentsWhenDoneMask) == __kCFFreeContentsWhenDone;}
-CF_INLINE Boolean __CFStrHasContentsDeallocator(CFStringRef str)    {return (str->base._cfinfo[CF_INFO_BITS] & __kCFHasContentsDeallocatorMask) == __kCFHasContentsDeallocator;}
-CF_INLINE Boolean __CFStrIsUnicode(CFStringRef str)                 {return (str->base._cfinfo[CF_INFO_BITS] & __kCFIsUnicodeMask) == __kCFIsUnicode;}
-CF_INLINE Boolean __CFStrIsEightBit(CFStringRef str)                {return (str->base._cfinfo[CF_INFO_BITS] & __kCFIsUnicodeMask) != __kCFIsUnicode;}
-CF_INLINE Boolean __CFStrHasNullByte(CFStringRef str)               {return (str->base._cfinfo[CF_INFO_BITS] & __kCFHasNullByteMask) == __kCFHasNullByte;}
-CF_INLINE Boolean __CFStrHasLengthByte(CFStringRef str)             {return (str->base._cfinfo[CF_INFO_BITS] & __kCFHasLengthByteMask) == __kCFHasLengthByte;}
-CF_INLINE Boolean __CFStrHasExplicitLength(CFStringRef str)         {return (str->base._cfinfo[CF_INFO_BITS] & (__kCFIsMutableMask | __kCFHasLengthByteMask)) != __kCFHasLengthByte;}	// Has explicit length if (1) mutable or (2) not mutable and no length byte
+CF_INLINE Boolean __CFStrIsMutable(CFStringRef str)                 {return __CFRuntimeGetFlag(str, __kCFIsMutable);}
+CF_INLINE Boolean __CFStrIsUnicode(CFStringRef str)                 {return __CFRuntimeGetFlag(str, __kCFIsUnicode);}
+CF_INLINE Boolean __CFStrIsEightBit(CFStringRef str)                {return !__CFRuntimeGetFlag(str, __kCFIsUnicode);}
+CF_INLINE Boolean __CFStrHasNullByte(CFStringRef str)               {return __CFRuntimeGetFlag(str, __kCFHasNullByte);}
+CF_INLINE Boolean __CFStrHasLengthByte(CFStringRef str)             {return __CFRuntimeGetFlag(str, __kCFHasLengthByte);}
+CF_INLINE Boolean __CFStrHasExplicitLength(CFStringRef str)         {
+    // Has explicit length if (1) mutable or (2) not mutable and no length byte
+    const uint8_t isMutableMask = 1 | 4; // is_mutable_mask | has_length_byte_mask
+    const uint8_t hasLengthByteMask = 4; // has_length_byte_mask
+    return (__CFRuntimeGetValue(str, 2, 0) & isMutableMask) != hasLengthByteMask;
+}
+
+CF_INLINE void __CFStrSetIsMutable(CFStringRef str)                         {__CFRuntimeSetFlag(str, __kCFIsMutable, true);}
+CF_INLINE void __CFStrSetHasNullByte(CFStringRef str, Boolean flag)         {__CFRuntimeSetFlag(str, __kCFHasNullByte, flag);}
+CF_INLINE void __CFStrSetHasLengthByte(CFStringRef str, Boolean flag)       {__CFRuntimeSetFlag(str, __kCFHasLengthByte, flag);}
+CF_INLINE void __CFStrSetUnicode(CFMutableStringRef str, Boolean flag)      {__CFRuntimeSetFlag(str, __kCFIsUnicode, flag);}
+
+CF_INLINE void __CFStrSetHasLengthAndNullBytes(CFMutableStringRef str) {
+    __CFStrSetHasLengthByte(str, true);
+    __CFStrSetHasNullByte(str, true);
+}
+CF_INLINE void __CFStrClearHasLengthAndNullBytes(CFMutableStringRef str) {
+    __CFStrSetHasLengthByte(str, false);
+    __CFStrSetHasNullByte(str, false);
+}
+
 CF_INLINE Boolean __CFStrIsConstant(CFStringRef str) {
-#if __LP64__
-    return str->base._rc == 0;
+#if DEPLOYMENT_RUNTIME_SWIFT
+    return str->base._swift_rc & _CF_SWIFT_RC_PINNED_FLAG;
 #else
-    return (str->base._cfinfo[CF_RC_BITS]) == 0;
+    return __CFRuntimeIsConstant(str);
 #endif
 }
+
+CF_INLINE SInt32 __CFStrSkipAnyLengthByte(CFStringRef str)          {return __CFRuntimeGetFlag(str, __kCFHasLengthByte) ? 1 : 0;}    // Number of bytes to skip over the length byte in the contents
 
 /* Returns ptr to the buffer (which might include the length byte).
  */
 CF_INLINE const void *__CFStrContents(CFStringRef str) {
     if (__CFStrIsInline(str)) {
         return (const void *)(((uintptr_t)&(str->variants)) + (__CFStrHasExplicitLength(str) ? sizeof(CFIndex) : 0));
-    } else {	// Not inline; pointer is always word 2
+    } else {    // Not inline; pointer is always word 2
         return str->variants.notInlineImmutable1.buffer;
     }
 }
@@ -500,7 +643,9 @@ enum {		/* Bits 2-3 */
 };
 
 CF_INLINE CFIndex __CFArrayGetType(CFArrayRef array) {
-    return __CFBitfieldGetValue(((const CFRuntimeBase *)array)->_cfinfo[CF_INFO_BITS], 1, 0);
+//    return __CFBitfieldGetValue(V, N1, N2)
+    return __CFRuntimeGetValue(array, 1, 0);
+//    return __CFBitfieldGetValue(((const CFRuntimeBase *)array)->_cfinfo[CF_INFO_BITS], 1, 0);
 }
 
 CF_INLINE CFIndex __CFArrayGetSizeOfType(CFIndex t) {
@@ -517,7 +662,7 @@ CF_INLINE CFIndex __CFArrayGetSizeOfType(CFIndex t) {
 CF_INLINE struct __CFArrayBucket *__CFArrayGetBucketsPtr(CFArrayRef array) {
     switch (__CFArrayGetType(array)) {
         case __kCFArrayImmutable:
-            return (struct __CFArrayBucket *)((uint8_t *)array + __CFArrayGetSizeOfType(((CFRuntimeBase *)array)->_cfinfo[CF_INFO_BITS]));
+            return (struct __CFArrayBucket *)((uint8_t *)array + __CFArrayGetSizeOfType(((CFRuntimeBase *)array)->_cfinfoa));
         case __kCFArrayDeque: {
             struct __CFArrayDeque *deque = (struct __CFArrayDeque *)array->_store;
             return (struct __CFArrayBucket *)((uint8_t *)deque + sizeof(struct __CFArrayDeque) + deque->_leftIdx * sizeof(struct __CFArrayBucket));

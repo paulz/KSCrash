@@ -40,7 +40,7 @@
     kscm_setActiveMonitors(KSCrashMonitorTypeNone);
 }
 
-- (void) testSuspendResumeThreads
+- (void) XtestSuspendResumeThreads
 {
     ksmc_suspendEnvironment();
     ksmc_suspendEnvironment();
