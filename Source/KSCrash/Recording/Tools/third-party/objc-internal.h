@@ -206,7 +206,7 @@ _objc_error(id _Nullable rcv, const char * _Nonnull fmt, va_list args)
 /**
  * Returns the names of all the classes within a library.
  *
- * @param image The mach header for library or framework you are inquiring about.
+ * @param mh The mach header for library or framework you are inquiring about.
  * @param outCount The number of class names returned.
  *
  * @return An array of C strings representing the class names.
