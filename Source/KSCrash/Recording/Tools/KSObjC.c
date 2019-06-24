@@ -27,6 +27,7 @@
 
 #include "KSObjC.h"
 #include "KSObjCApple.h"
+#include "objc-internal.h"
 
 #include "KSMemory.h"
 #include "KSString.h"

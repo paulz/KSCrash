@@ -42,6 +42,20 @@ NAME { \
 
 
 // ======================================================================
+// __BRIDGEOS_UNAVAILABLE definition below was copied from
+// https://opensource.apple.com/source/dyld/dyld-551.4/include/mach-o/dyld.h
+// ======================================================================
+#ifndef __BRIDGEOS_UNAVAILABLE
+    #ifdef __ENVIRONMENT_BRIDGE_OS_VERSION_MIN_REQUIRED__
+        #define __BRIDGEOS_UNAVAILABLE   __OS_AVAILABILITY(bridgeos,unavailable)
+    #else
+        #define __BRIDGEOS_UNAVAILABLE
+    #endif
+#endif
+    
+
+    
+// ======================================================================
 #pragma mark - objc4-680/runtime/objc-msg-x86_64.s -
 // and objc4-680/runtime/objc-msg-arm64.s
 // ======================================================================
@@ -108,24 +122,6 @@ NAME { \
 #endif
 
 #endif
-
-// ======================================================================
-#pragma mark - objc4-680/runtime/objc-internal.h -
-// ======================================================================
-
-enum
-{
-    OBJC_TAG_NSAtom            = 0,
-    OBJC_TAG_1                 = 1,
-    OBJC_TAG_NSString          = 2,
-    OBJC_TAG_NSNumber          = 3,
-    OBJC_TAG_NSIndexPath       = 4,
-    OBJC_TAG_NSManagedObjectID = 5,
-    OBJC_TAG_NSDate            = 6,
-    OBJC_TAG_7                 = 7
-};
-
-
 
 // ======================================================================
 #pragma mark - objc4-680/runtime/objc-os.h -
